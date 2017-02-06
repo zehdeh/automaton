@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/local/bin/python3
 
 import sys
 import math
@@ -39,7 +39,6 @@ class Graph:
 	def __init__(self, nodeCount):
 		self.nodeCount = nodeCount
 		self.nodeActivity = np.zeros(nodeCount)
-		self.nodeActivity[nodeCount / 2] = 1
 		
 		self.edges = set()
 		seed()
@@ -58,26 +57,29 @@ class GraphView(QtWidgets.QFrame):
 		self.rows = int(math.sqrt(self.graph.nodeCount))
 		self.nodeRadius = 4
 		self.margin = 30
+
+		self.totalGraphWidth = self.rows*(2*self.nodeRadius + self.margin)
+		self.totalGraphHeight = self.columns*(2*self.nodeRadius + self.margin)
+	def paintEdge(self, painter, i, j):
+
+		painter.drawLine((self.width() - self.totalGraphWidth)/2 + (i % self.columns)*(2*self.nodeRadius + self.margin) + self.nodeRadius,\
+		(self.height() - self.totalGraphHeight)/2 + int(i / self.columns)*(2*self.nodeRadius + self.margin) + self.nodeRadius,\
+		(self.width() - self.totalGraphWidth)/2 + (j % self.columns)*(2*self.nodeRadius + self.margin) + self.nodeRadius,\
+		(self.height() - self.totalGraphHeight)/2 + int(j / self.columns)*(2*self.nodeRadius + self.margin) + self.nodeRadius)
+
 	def paintEvent(self, e):
 		painter = QtGui.QPainter(self)
 
-		totalGraphWidth = self.rows*(2*self.nodeRadius + self.margin)
-		totalGraphHeight = self.columns*(2*self.nodeRadius + self.margin)
-
 		painter.setPen(Qt.darkGray)
 		for edge in self.graph.edges:
-			painter.drawLine((self.width() - totalGraphWidth)/2 + (edge[0] % self.columns)*(2*self.nodeRadius + self.margin) + self.nodeRadius,\
-			(self.height() - totalGraphHeight)/2 + (edge[0] / self.columns)*(2*self.nodeRadius + self.margin) + self.nodeRadius,\
-			(self.width() - totalGraphWidth)/2 + (edge[1] % self.columns)*(2*self.nodeRadius + self.margin) + self.nodeRadius,\
-			(self.height() - totalGraphHeight)/2 + (edge[1] / self.columns)*(2*self.nodeRadius + self.margin) + self.nodeRadius)
-
+			self.paintEdge(painter, edge[0], edge[1])
 
 		painter.setPen(Qt.black)
 		painter.setBrush(Qt.white)
 		for i in range(self.columns):
 			for j in range(self.rows):
 				painter.setBrush(Qt.red if self.graph.nodeActivity[i*self.columns + j] == 1 else Qt.white)
-				painter.drawEllipse((self.width() - totalGraphWidth)/2 + i*(2*self.nodeRadius + self.margin), (self.height() - totalGraphHeight)/2 + j*(2*self.nodeRadius + self.margin), 2*self.nodeRadius, 2*self.nodeRadius)
+				painter.drawEllipse((self.width() - self.totalGraphWidth)/2 + i*(2*self.nodeRadius + self.margin), (self.height() - self.totalGraphHeight)/2 + j*(2*self.nodeRadius + self.margin), 2*self.nodeRadius, 2*self.nodeRadius)
 
 		painter.end()
 
@@ -86,11 +88,15 @@ class Window(QtWidgets.QMainWindow):
 		super(Window, self).__init__()
 
 		self.statusBar().showMessage("Ready")
+		self.setFixedSize(800,800)
 		self.show()
 
 		self.splitter = QtWidgets.QSplitter(Qt.Vertical)
 
 		self.graph = Graph(20*20)
+		self.graph.nodeActivity[int(self.graph.nodeCount / 2)] = 1
+		self.graph.nodeActivity[int(self.graph.nodeCount / 2)+1] = 1
+
 		self.graphView = GraphView(self.graph)
 		#self.splitter.addWidget(self.grid)
 		#self.splitter.addWidget(self.graph)
