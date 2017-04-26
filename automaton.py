@@ -56,6 +56,14 @@ class Graph:
 		nextState = np.zeros(self.nodeCount)
 		activeIndices = np.where(self._nodeActivity == 1)
 
+		newIndices = []
+		for i in activeIndices[0]:
+			newIndices += self.getNeighbours(i)
+		self._nodeActivity[:] = 0
+		self._nodeActivity[newIndices] = 1
+	def getNeighbours(self,i):
+		 return [edge[1] for edge in self.edges if edge[0] == i] + [edge[0] for edge in self.edges if edge[1] == i]
+
 class GraphView(QtWidgets.QFrame):
 	def __init__(self, graph):
 		super(GraphView, self).__init__()
