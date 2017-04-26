@@ -3,7 +3,7 @@
 import sys
 import math
 import numpy as np
-from random import seed,random
+from random import seed,random, randint
 from PyQt5.QtCore import Qt
 from PyQt5 import QtGui,QtWidgets
 
@@ -36,9 +36,9 @@ class Grid(QtWidgets.QFrame):
 		painter.end()
 
 class Graph:
-	def __init__(self, nodeCount):
+	def __init__(self, nodeCount: int):
 		self.nodeCount = nodeCount
-		self.nodeActivity = np.zeros(nodeCount)
+		self._nodeActivity = np.zeros(nodeCount)
 		
 		self.edges = set()
 		seed()
@@ -46,7 +46,15 @@ class Graph:
 			for j in range(nodeCount):
 				if i < j and random() < 0.01:
 					self.edges.add((i,j))
-
+	@property
+	def nodeActivity(self):
+		return self._nodeActivity
+	@nodeActivity.setter
+	def nodeActivity(self, value):
+		self._nodeActivity = value
+	def nextState(self):
+		nextState = np.zeros(self.nodeCount)
+		activeIndices = np.where(self._nodeActivity == 1)
 
 class GraphView(QtWidgets.QFrame):
 	def __init__(self, graph):
@@ -60,7 +68,7 @@ class GraphView(QtWidgets.QFrame):
 
 		self.totalGraphWidth = self.rows*(2*self.nodeRadius + self.margin)
 		self.totalGraphHeight = self.columns*(2*self.nodeRadius + self.margin)
-	def paintEdge(self, painter, i, j):
+	def paintEdge(self, painter, i: int, j: int):
 
 		painter.drawLine((self.width() - self.totalGraphWidth)/2 + (i % self.columns)*(2*self.nodeRadius + self.margin) + self.nodeRadius,\
 		(self.height() - self.totalGraphHeight)/2 + int(i / self.columns)*(2*self.nodeRadius + self.margin) + self.nodeRadius,\
@@ -84,7 +92,7 @@ class GraphView(QtWidgets.QFrame):
 		painter.end()
 
 class Window(QtWidgets.QMainWindow):
-	def __init__(self):
+	def __init__(self,graph):
 		super(Window, self).__init__()
 
 		self.statusBar().showMessage("Ready")
@@ -92,11 +100,8 @@ class Window(QtWidgets.QMainWindow):
 		self.show()
 
 		self.splitter = QtWidgets.QSplitter(Qt.Vertical)
-
-		self.graph = Graph(20*20)
-		self.graph.nodeActivity[int(self.graph.nodeCount / 2)] = 1
-		self.graph.nodeActivity[int(self.graph.nodeCount / 2)+1] = 1
-
+		
+		self.graph = graph
 		self.graphView = GraphView(self.graph)
 		#self.splitter.addWidget(self.grid)
 		#self.splitter.addWidget(self.graph)
@@ -104,6 +109,19 @@ class Window(QtWidgets.QMainWindow):
 		self.setCentralWidget(self.graphView)
 
 if __name__ == '__main__':
+	numberNodes = 400
 	app = QtWidgets.QApplication(sys.argv)
-	window = Window()
+	graph = Graph(numberNodes)
+
+	initialState = np.zeros(numberNodes)
+	initialState[0] = 1
+	initialState[1] = 1
+	initialState[2] = 1
+	initialState[3] = 1
+	initialState[4] = 1
+	graph.nodeActivity = initialState
+	graph.nextState()
+
+	window = Window(graph)
+
 	sys.exit(app.exec_())
